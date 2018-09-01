@@ -1,0 +1,1005 @@
+
+//RDD programming model
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+val valid_allTweets = allTweetsRdd.filter(_.length == 5)
+
+val allTweets_Timestamp = valid_allTweets.map(_(3))
+
+
+Question 1) Total number of tweets each year
+
+ val allTweets_yearly = allTweets_Timestamp.map(_.split(" ")(5))
+ 
+ val allTweets_yearly_vol = allTweets_yearly.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_yearly_vol.collect.foreach(println)
+ 
+ Answer: 
+(2014,119912709)
+(2015,5023)
+(2013,4403)
+
+Question 2)Sort the months in 3 years,starting with highest Number of tweets to lowest number of tweets.
+
+ val allTweets_monthly = allTweets_Timestamp.map(_.split(" ")).map(x=> (x(1),x(5)))
+ 
+ val allTweets_monthly_vol = allTweets_October.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_monthly_vol.collect.foreach(println)
+ 
+ Answer:
+ 
+((Oct,2014),119898304)
+((Jun,2014),2808)
+((Feb,2015),2651)
+((Aug,2014),2127)
+((Jan,2015),1994)
+((Sep,2014),1980)
+((May,2014),1966)
+((Jul,2014),1965)
+((Apr,2014),1955)
+((Nov,2013),1487)
+((Dec,2013),1441)
+((Oct,2013),1288)
+((Mar,2014),1044)
+((Mar,2015),378)
+((Dec,2014),343)
+((Jan,2014),217)
+((Sep,2013),187)
+
+Question 3) Which days of Oct month in the year 2014 got most tweets.  
+
+ val allTweets_2014_Oct_dayWise = allTweets_Timestamp.map(_.split(" ")).filter(x=> (x(5) == ("2014")) && (x(1) == ("Oct"))).map(x=> x(0))
+ 
+ val allTweets_2014_Oct_dayWise_vol = allTweets_2014_Oct_dayWise.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_2014_Oct_dayWise_vol.collect.foreach(println)
+ 
+ Answer: 
+ 
+(Sat,119897482)
+(Fri,235)
+(Thu,186)
+(Wed,146)
+(Mon,144)
+(Sun,69)
+(Tue,42)
+
+Question 4) Which dates and days of Oct month in the year 2014 got most tweets.  
+
+ val allTweets_2014_Oct_dayWise_dateWise = allTweets_Timestamp.map(_.split(" ")).filter(x=> (x(5) == ("2014")) && (x(1) == ("Oct"))).map(x=>(x(1)+" "+x(0)+" "+x(2)))
+ 
+ val allTweets_2014_Oct_dayWise_dateWise_vol = allTweets_2014_Oct_dayWise_dateWise.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_2014_Oct_dayWise_dateWise_vol.collect.foreach(println)
+ 
+ Answer:
+ 
+(Oct Sat 11,119897438)
+(Oct Fri 10,159)
+(Oct Mon 06,144)
+(Oct Thu 09,116)
+(Oct Wed 01,89)
+(Oct Fri 03,76)
+(Oct Thu 02,70)
+(Oct Sun 05,69)
+(Oct Wed 08,57)
+(Oct Sat 04,44)
+(Oct Tue 07,42)
+ 
+Question 5) Total Number of tweets for each day of week, for each month, for year 2014
+
+ val allTweets_dayWise_2014 = allTweets_Timestamp.map(_.split(" ")).filter(x=> (x(5) == ("2014"))).map(x=>(x(0)+" "+x(1)))
+ 
+ val allTweets_dayWise_vol_2014 = allTweets_dayWise_2014.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_dayWise_vol_2014.collect.foreach(println)
+ 
+ Answer:
+ (Sat Oct,119897482)
+(Wed Jun,732)
+(Thu Jun,591)
+(Wed Apr,474)
+(Mon Sep,446)
+(Fri May,415)
+(Tue Jul,414)
+(Mon Jun,414)
+(Tue Sep,414)
+(Fri Aug,410)
+(Tue Jun,399)
+(Wed Jul,393)
+(Tue Apr,344)
+(Thu Aug,333)
+(Thu Apr,325)
+(Wed Aug,317)
+(Thu Jul,315)
+(Thu May,313)
+(Wed Sep,305)
+(Sun Aug,302)
+(Fri Jun,289)
+(Wed May,280)
+(Mon Apr,278)
+(Mon Aug,272)
+(Sat Aug,271)
+(Mon May,270)
+(Tue May,266)
+(Thu Sep,264)
+(Fri Sep,262)
+(Mon Jul,251)
+(Sat May,249)
+(Fri Apr,246)
+(Fri Oct,235)
+(Sun Jun,233)
+(Sun Jul,230)
+(Mon Mar,222)
+(Tue Aug,222)
+(Wed Jan,217)
+(Sun Mar,204)
+(Fri Jul,202)
+(Thu Oct,186)
+(Sun May,173)
+(Sat Apr,171)
+(Sat Jul,160)
+(Sat Sep,156)
+(Sat Jun,150)
+(Wed Oct,146)
+(Mon Oct,144)
+(Thu Mar,144)
+(Sun Sep,133)
+(Wed Mar,129)
+(Fri Mar,125)
+(Sun Apr,117)
+(Tue Mar,114)
+(Sat Mar,106)
+(Tue Dec,104)
+(Wed Dec,98)
+(Sun Oct,69)
+(Mon Dec,47)
+(Tue Oct,42)
+(Thu Dec,29)
+(Fri Dec,25)
+(Sun Dec,24)
+(Sat Dec,16)
+
+
+Question 6)Total number of tweets before 12PM and after 12PM
+
+ val allTweets_time_am = allTweets_Timestamp.map(_.split(" ")).map(x=> (x(3) <= "11:59:59"))
+ 
+ val allTweets_time_am_vol = allTweets_time_am.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+ 
+ allTweets_time_am_vol.collect.foreach(println)
+ 
+ Answer:
+ 
+(false,119908689)
+(true,13446)
+
+
+Question 7) Top 100 most used words in tweets for all three years.
+
+val words = valid_allTweets.flatMap(_(1).toLowerCase.split("\\W+").filter(_.matches("[a-z]+")).filter(_.length > 2).filterNot(_.matches("http")))
+
+val wordCount = words.map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+
+wordCount.take(100).foreach(println)
+
+Answer:
+
+(risk,239794824)
+(taking,178647249)
+(your,177462667)
+(career,175062671)
+(power,119909452)
+(the,119904999)
+(for,119900752)
+(reward,119897417)
+(you,62353103)
+(not,62347161)
+(risks,58749729)
+(say,53954004)
+(socialmedia,10790804)
+(mashable,10790770)
+(tech,5995092)
+(teamfollowback,4795896)
+(via,3597757)
+(news,2398125)
+(smm,2397949)
+(ctojzqncgv,2397948)
+(technology,1202252)
+(from,1200390)
+(business,1199669)
+(https,1199299)
+(media,1199076)
+(mobile,1199061)
+(social,1199060)
+(says,1199026)
+(tak,1198991)
+(latest,1198991)
+(source,1198989)
+(vice,1198985)
+(seo,1198984)
+(technews,1198979)
+(hiu,1198974)
+(hwxdmpowhe,1198974)
+(neiescxfig,1198974)
+(pcxjhnkvil,1198974)
+(hofigdljdh,1198974)
+(operationrt,1198974)
+(kupcorgfgx,1198974)
+(ustmtjsvco,1198974)
+(bfkksxlnwi,1198974)
+(operationarmy,1198974)
+(soloconectate,1198974)
+(talkradiance,1198974)
+(qjrqoayarp,1198974)
+(oojurqiett,1198974)
+(qteqonjazq,1198974)
+(najazbolsz,1198974)
+(valerie,1198974)
+(nlluavqany,1198974)
+(jwmoqkfxqe,1198974)
+(ievwppuyqa,1198974)
+(nnodvxyorq,1198974)
+(gjxpqvxedj,1198974)
+(efrainsalinasmx,1198974)
+(mhitnlomxq,1198974)
+(technoolgy,1198974)
+(androidportfolio,1198974)
+(wncmwjniun,1198974)
+(oswalt,1198974)
+(cfbweyirph,1198974)
+(lxmoibrhew,1198974)
+(pwgezeazsu,1198974)
+(graduate,8092)
+(computer,6069)
+(and,6003)
+(science,5590)
+(with,4730)
+(degree,4240)
+(software,3393)
+(information,3341)
+(job,3267)
+(engineering,3084)
+(have,2034)
+(jobs,1832)
+(feng,1565)
+(shui,1565)
+(more,1429)
+(this,1403)
+(are,1333)
+(will,1257)
+(how,1245)
+(get,1242)
+(help,1217)
+(life,1164)
+(join,1094)
+(can,1030)
+(that,1003)
+(new,997)
+(engineer,993)
+(need,949)
+(electric,913)
+(schneider,899)
+(book,877)
+(change,846)
+(should,842)
+(what,830)
+(practical,794)
+
+
+Question 8) Number of times the tweets are retweeted
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+val valid_allTweets = allTweetsRdd.filter(_.length == 5)
+
+val retweeted = valid_allTweets.flatMap(_(1).split("\\W+").filter(_.matches("RT")))
+
+val retweet_count = retweeted.map((_,1)).reduceByKey(_+_)
+
+retweet_count.collect.foreach(println)
+
+Answer: (RT,2405234)
+
+
+Question 9) First 100 most frequent user and their number of tweets
+
+val freqUser = valid_allTweets.map(_(0)).map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+
+freqUser.take(100).foreach(println)
+
+Answer:
+
+(T_HADITIA,2397948)
+(galternativa,2397948)
+(asimohonda,2397948)
+(twittfrog,2397948)
+(Geraldscamp,1198975)
+(RLause,1198974)
+(ReelMediaCoach,1198974)
+(Solo_Conectate,1198974)
+(GizmoFarm,1198974)
+(whitelabellocal,1198974)
+(Nlt_21,1198974)
+(punithkumarn,1198974)
+(FCC_ID,1198974)
+(shelbylaneMD,1198974)
+(Jkenton09,1198974)
+(spotback,1198974)
+(paid4everything,1198974)
+(vandana_india,1198974)
+(CapitalVA,1198974)
+(4everabundance,1198974)
+(TalkRadiance,1198974)
+(EpiphanyDM,1198974)
+(WebCastTVMedia,1198974)
+(TygrScott,1198974)
+(dainapeter,1198974)
+(LGFundingGroup,1198974)
+(MySurryHills,1198974)
+(rescarzaga,1198974)
+(paulzuke,1198974)
+(AnanseOnline,1198974)
+(GeorgeZisPaun,1198974)
+(OperationArmy,1198974)
+(World_Of_Hir,1198974)
+(TheMehulPatel,1198974)
+(pattyblest,1198974)
+(Guide2trick,1198974)
+(CreativeOctpus,1198974)
+(HeathAJordan,1198974)
+(KevinMorris101,1198974)
+(SocMediaNation,1198974)
+(ZenFlint,1198974)
+(FastWhisper,1198974)
+(DwiCahya75,1198974)
+(igcstudios,1198974)
+(CursoHootUNO,1198974)
+(IMJulieWatson,1198974)
+(peter_handy,1198974)
+(BitGadget,1198974)
+(bloggerumer,1198974)
+(CooeeMedia,1198974)
+(LeighScane,1198974)
+(DanDraperKC,1198974)
+(Desarrollapp,1198974)
+(OperationRT,1198974)
+(EfrainSalinasMX,1198974)
+(heyhleb,1198974)
+(InteractiveIT,1198974)
+(tamarsw,1198974)
+(jisuotctmob,1198974)
+(erin_mcneal,1198974)
+(CarmenCiar,1198974)
+(SSMAAds,1198974)
+(JoeTheSharer,1198974)
+(raghav4web,1198974)
+(Ktownclassified,1198974)
+(fentinak,1198974)
+(sarahalexandra3,1198974)
+(EchoingSoundz,1198974)
+(OkanaganNow,1198974)
+(alfrevela,1198974)
+(Twibble_Test,1198974)
+(geeksntwits,1198974)
+(LennJohnston,1198974)
+(Maculous009,1198974)
+(redzoneemb,1198974)
+(bloggers,1198974)
+(Neha_Thakral,1198974)
+(ktsmithmelb,1198974)
+(mobilegurl,1198974)
+(Games_Vale,1198974)
+(LarryAn1980,1198974)
+(rubensjose,1198974)
+(adsociale,1198974)
+(Digitalcanyon,1198974)
+(Work4Coffee,1198974)
+(Joe_Kolb,1198974)
+(IloveGAAMSocial,1198974)
+(Bajuluoflife,1198974)
+(dimensionfour,1198974)
+(designsnake,1198974)
+(droidportfolio,1198974)
+(SEOvibes,1198974)
+(AAF_MAFA,1198974)
+(SocialSnippet,1198974)
+(RapidChangeNow,1198974)
+(AshkaITsolution,1198974)
+(Timvmarketing,404)
+(EngineersDay,136)
+(Best_Schools,115)
+(DSDBiz,92)
+
+
+
+Question 10) Sort the number of times a language is used for tweets from highest to lowest used language
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+val valid_allTweets = allTweetsRdd.filter(_.length == 5)
+
+val language_Count = valid_allTweets.map(_(2)).map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+
+language_Count.collect.foreach(println)
+
+Answer:
+
+(en,107930764)
+(es,5995172)
+(id,3596988)
+(fr,1199138)
+(pt,1199010)
+(en-gb,341)
+(ru,188)
+(tr,134)
+(de,104)
+(it,64)
+(nl,46)
+(ja,39)
+(ar,26)
+(el,20)
+(zh-cn,16)
+(fil,15)
+(sv,11)
+(cs,10)
+(zh-tw,9)
+(ca,7)
+(fi,5)
+(ko,5)
+(pl,4)
+(gl,4)
+(th,3)
+(en-GB,2)
+(vi,2)
+(hu,2)
+(da,2)
+(no,2)
+(eu,1)
+(hi,1)
+
+
+Question 11) Sort the number of times a geolocation has been used for posting a tweet from highest to lowest.  
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+val valid_allTweets = allTweetsRdd.filter(_.length == 5)
+
+val geolocation_count = valid_allTweets.map(_(4)).map((_,1)).reduceByKey(_+_).sortBy(-_._2)
+
+geolocation_Count.take(15).foreach(println)
+
+Answer:
+
+(null,119921867)
+(GeoLocation{latitude=45.411572, longitude=-75.698194},45) 
+(GeoLocation{latitude=53.344104, longitude=-6.2674937},4)
+(GeoLocation{latitude=29.776507, longitude=-95.420138},3)
+(GeoLocation{latitude=52.631866, longitude=-1.131868},3)
+(GeoLocation{latitude=2.963399, longitude=101.725802},2)
+(GeoLocation{latitude=38.38792699, longitude=27.04441911},2)
+(GeoLocation{latitude=37.3393857, longitude=-121.8949555},2)
+(GeoLocation{latitude=39.76690667, longitude=-86.15650321},2)
+(GeoLocation{latitude=25.0, longitude=-40.0},2)
+(GeoLocation{latitude=1.385644, longitude=103.841264},1)
+(GeoLocation{latitude=35.90710726, longitude=-78.79859962},1)
+(GeoLocation{latitude=28.5547746, longitude=77.1732992},1)
+(GeoLocation{latitude=5.308221, longitude=100.291708},1)
+(GeoLocation{latitude=52.1629862, longitude=-7.1664311},1)
+
+
+
+
+//(GeoLocation{latitude=45.411572, longitude=-75.698194},45) -> Centretown, Ottawa, ON, Canada
+
+//(GeoLocation{latitude=53.344104, longitude=-6.2674937},4)  -> Lord Edward St, Dublin, Ireland
+
+//(GeoLocation{latitude=29.776507, longitude=-95.420138}     -> Washington Ave./ Memorial Park, Houston, TX, USA
+
+//z(GeoLocation{latitude=52.631866, longitude=-1.131868},3)   -> Leicester Adult Education College, Leicester LE1, UK
+
+
+
+**************************************************************************************** 
+
+//Dataframe programming model
+
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+//define the schema for DataFrame
+case class allTweets(ScreenName: String, Tweet: String, Language: String, Timestamp: String, GeoLocation: String)
+
+val tweets = allTweetsRdd.filter(_.length == 5).map(x=> allTweets(x(0),x(1),x(2),x(3),x(4)))
+
+val tweetsDF = tweets.toDF
+
+tweetsDF.write.parquet("allTweets.parquet")
+
+val df = sqlContext.read.parquet("allTweets.parquet")
+
+val myData = df.withColumn("Day",split(col("Timestamp")," ").getItem(0)).withColumn("Month",split(col("Timestamp")," ").getItem(1)).withColumn("Date",split(col("Timestamp")," ").getItem(2)).withColumn("Time",split(col("Timestamp")," ").getItem(3)).withColumn("Timezone",split(col("Timestamp")," ").getItem(4)).withColumn("Year",split(col("Timestamp")," ").getItem(5))
+
+myData.show
+
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+|     ScreenName|               Tweet|Language|           Timestamp|GeoLocation|Day|Month|Date|    Time|Timezone|Year|
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+|CareerProGlobal|MyPeopleBiz Blog:...|      en|Thu Sep 26 10:13:...|       null|Thu|  Sep|  26|10:13:00|     CDT|2013|
+|     OllyGuseva|RT @trailof32: #9...|      ru|Thu Sep 26 12:12:...|       null|Thu|  Sep|  26|12:12:32|     CDT|2013|
+|      trailof32|#99cents This Car...|      en|Thu Sep 26 15:20:...|       null|Thu|  Sep|  26|15:20:17|     CDT|2013|
+|  paulregabooks|#99cents This Car...|      en|Thu Sep 26 15:20:...|       null|Thu|  Sep|  26|15:20:17|     CDT|2013|
+|  paulregabooks|#99cents This Car...|      en|Thu Sep 26 19:20:...|       null|Thu|  Sep|  26|19:20:12|     CDT|2013|
+|      trailof32|#99cents This Car...|      en|Thu Sep 26 19:20:...|       null|Thu|  Sep|  26|19:20:12|     CDT|2013|
+|     Damexified|RT @TheITTimes: U...|      en|Thu Sep 26 22:02:...|       null|Thu|  Sep|  26|22:02:51|     CDT|2013|
+|  coolnigga1234|@StephMcMahon  so...|      en|Fri Sep 27 02:18:...|       null|Fri|  Sep|  27|02:18:19|     CDT|2013|
+| AngieoftheMage|@Taegangers hi! :...|     fil|Fri Sep 27 06:37:...|       null|Fri|  Sep|  27|06:37:33|     CDT|2013|
+|      pearcey33|@GLEMOODY there i...|      en|Fri Sep 27 12:08:...|       null|Fri|  Sep|  27|12:08:19|     CDT|2013|
+|  paulageraghty|RT @YourRTEGuide:...|      en|Fri Sep 27 14:52:...|       null|Fri|  Sep|  27|14:52:43|     CDT|2013|
+|Gottalove_Reezy|Aye anybody with ...|      en|Fri Sep 27 16:19:...|       null|Fri|  Sep|  27|16:19:13|     CDT|2013|
+|       joycecom|Harness the power...|      en|Sat Sep 28 02:22:...|       null|Sat|  Sep|  28|02:22:08|     CDT|2013|
+|       CIAngels|@TheHazelFaith th...|      en|Sat Sep 28 10:18:...|       null|Sat|  Sep|  28|10:18:54|     CDT|2013|
+|      FWTruther|I'm anonymous bec...|      en|Sat Sep 28 22:38:...|       null|Sat|  Sep|  28|22:38:56|     CDT|2013|
+|     ZaidJilani|One problem with ...|      en|Sun Sep 29 11:03:...|       null|Sun|  Sep|  29|11:03:45|     CDT|2013|
+|      maggiebob|@OOK_Librarian I’...|      en|Sun Sep 29 15:52:...|       null|Sun|  Sep|  29|15:52:05|     CDT|2013|
+| barleycoveband|RT @CariCole: Wan...|      en|Sun Sep 29 20:56:...|       null|Sun|  Sep|  29|20:56:55|     CDT|2013|
+|kpowersofficial|HAPPY BIRTHDAY Gl...|      en|Mon Sep 30 03:22:...|       null|Mon|  Sep|  30|03:22:37|     CDT|2013|
+|         APSOZA|How power poses c...|      en|Mon Sep 30 06:02:...|       null|Mon|  Sep|  30|06:02:44|     CDT|2013|
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+
+
+
+
+Question 1)Sort the months in 3 years,starting with highest Number of tweets to lowest number of tweets.
+
+myData.groupBy("Month","Year").count.sort(desc("count")).collect.foreach(println)
+
+Answer:
+
+[Oct,2014,119898304]
+[Jun,2014,2808]
+[Feb,2015,2651]
+[Aug,2014,2127]
+[Jan,2015,1994]
+[Sep,2014,1980]
+[May,2014,1966]
+[Jul,2014,1965]
+[Apr,2014,1955]
+[Nov,2013,1487]
+[Dec,2013,1441]
+[Oct,2013,1288]
+[Mar,2014,1044]
+[Mar,2015,378]
+[Dec,2014,343]
+[Jan,2014,217]
+[Sep,2013,187]
+
+Question 2) Which days of Oct month in the year 2014 got most tweets.  
+
+myData.filter((myData("Month")==="Oct")&&(myData("Year")==="2014")).groupBy("Month","Year","Day").count.sort(desc("count")).show
+
+Answer: 
+
++-----+----+---+---------+
+|Month|Year|Day|    count|
++-----+----+---+---------+
+|  Oct|2014|Sat|119897482|
+|  Oct|2014|Fri|      235|
+|  Oct|2014|Thu|      186|
+|  Oct|2014|Wed|      146|
+|  Oct|2014|Mon|      144|
+|  Oct|2014|Sun|       69|
+|  Oct|2014|Tue|       42|
++-----+----+---+---------+
+
+Question 3) Which dates and days of Oct month in the year 2014 got most tweets.  
+
+myData.filter((myData("Month")==="Oct")&&(myData("Year")==="2014")).groupBy("Month","Year","Date","Day").count.sort(desc("count")).show
+
+Answer:
+
++-----+----+----+---+---------+
+|Month|Year|Date|Day|    count|
++-----+----+----+---+---------+
+|  Oct|2014|  11|Sat|119897438|
+|  Oct|2014|  10|Fri|      159|
+|  Oct|2014|  06|Mon|      144|
+|  Oct|2014|  09|Thu|      116|
+|  Oct|2014|  01|Wed|       89|
+|  Oct|2014|  03|Fri|       76|
+|  Oct|2014|  02|Thu|       70|
+|  Oct|2014|  05|Sun|       69|
+|  Oct|2014|  08|Wed|       57|
+|  Oct|2014|  04|Sat|       44|
+|  Oct|2014|  07|Tue|       42|
++-----+----+----+---+---------+
+
+
+Question 4)Top 5 users who retweeted. 
+
+myData.filter(col("Tweet").startsWith("RT")).groupBy("ScreenName").count.sort(desc("count")).take(5)
+
+Answer: 
+
+[T_HADITIA,2397948]
+[OllyGuseva,90]
+[meOllyGuseva,86]
+[AvailabilityUK,51]
+[ITgrads,26]
+
+Question 5)First 100 most frequent user and their number of tweets
+
+myData.groupBy("ScreenName").count.sort(desc("count")).take(100).foreach(println)
+
+Answer: 
+
+[asimohonda,2397948]
+[T_HADITIA,2397948]
+[galternativa,2397948]
+[twittfrog,2397948]
+[Geraldscamp,1198975]
+[SocMediaNation,1198974]
+[EchoingSoundz,1198974]
+[Neha_Thakral,1198974]
+[peter_handy,1198974]
+[AAF_MAFA,1198974]
+[OkanaganNow,1198974]
+[adsociale,1198974]
+[bloggerumer,1198974]
+[KevinMorris101,1198974]
+[SocialSnippet,1198974]
+[OperationArmy,1198974]
+[RLause,1198974]
+[OperationRT,1198974]
+[dainapeter,1198974]
+[SEOvibes,1198974]
+[CooeeMedia,1198974]
+[TygrScott,1198974]
+[rubensjose,1198974]
+[IMJulieWatson,1198974]
+[CapitalVA,1198974]
+[Joe_Kolb,1198974]
+[whitelabellocal,1198974]
+[vandana_india,1198974]
+[Nlt_21,1198974]
+[GeorgeZisPaun,1198974]
+[redzoneemb,1198974]
+[Twibble_Test,1198974]
+[LennJohnston,1198974]
+[JoeTheSharer,1198974]
+[Bajuluoflife,1198974]
+[heyhleb,1198974]
+[Guide2trick,1198974]
+[rescarzaga,1198974]
+[fentinak,1198974]
+[raghav4web,1198974]
+[CursoHootUNO,1198974]
+[Maculous009,1198974]
+[designsnake,1198974]
+[AshkaITsolution,1198974]
+[erin_mcneal,1198974]
+[BitGadget,1198974]
+[Work4Coffee,1198974]
+[TheMehulPatel,1198974]
+[ktsmithmelb,1198974]
+[DwiCahya75,1198974]
+[jisuotctmob,1198974]
+[geeksntwits,1198974]
+[4everabundance,1198974]
+[World_Of_Hir,1198974]
+[ReelMediaCoach,1198974]
+[spotback,1198974]
+[paulzuke,1198974]
+[LGFundingGroup,1198974]
+[HeathAJordan,1198974]
+[igcstudios,1198974]
+[alfrevela,1198974]
+[FastWhisper,1198974]
+[ZenFlint,1198974]
+[Digitalcanyon,1198974]
+[TalkRadiance,1198974]
+[EpiphanyDM,1198974]
+[IloveGAAMSocial,1198974]
+[Ktownclassified,1198974]
+[Games_Vale,1198974]
+[Solo_Conectate,1198974]
+[LeighScane,1198974]
+[sarahalexandra3,1198974]
+[FCC_ID,1198974]
+[EfrainSalinasMX,1198974]
+[SSMAAds,1198974]
+[dimensionfour,1198974]
+[bloggers,1198974]
+[CreativeOctpus,1198974]
+[DanDraperKC,1198974]
+[GizmoFarm,1198974]
+[Desarrollapp,1198974]
+[paid4everything,1198974]
+[Jkenton09,1198974]
+[WebCastTVMedia,1198974]
+[InteractiveIT,1198974]
+[punithkumarn,1198974]
+[shelbylaneMD,1198974]
+[LarryAn1980,1198974]
+[MySurryHills,1198974]
+[RapidChangeNow,1198974]
+[CarmenCiar,1198974]
+[tamarsw,1198974]
+[AnanseOnline,1198974]
+[droidportfolio,1198974]
+[mobilegurl,1198974]
+[pattyblest,1198974]
+[Timvmarketing,404]
+[EngineersDay,136]
+[Best_Schools,115]
+[DSDBiz,92]
+
+
+Question 6) Exploring the tweets done on Oct 11,2014.
+
+myData.filter((myData("Month")==="Oct")&&(myData("Year")==="2014")&&(myData("Date")==="11")).select("Tweet").take(50).foreach(println)
+
+Answer:
+
+[How 'power poses' can help your career http://t.co/MknmWofLYE via @spectrum4hr #powerpose #career http://t.co/BV04IAmQDp]
+[E.Q. Librium: Unleash the Power of Your Emotional Intelligence; A Proven Path to Career Success -  http://t.co/2NSamOQQ5l more informa...]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/3CBtyxGvQL #SoloConectate]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/m56Vz61oIn]
+[#TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/OOjurQiEtt]
+[#TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/gXs3HN0By8]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/uTvA6VZYhC]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/uQDYJkVEW0]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/tGPa5nwSJf]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Z6NzPUiQOH]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/dwPOM5kJ1m]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/hOfIGdlJDH]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/xxBVj4olig #SMM #SocialMedia]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/fMtg55Xr9e #tech #mashable]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/MHITNlomxQ]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[#socialmedia #news No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/USTMtjSvCo]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/61YMkQAB7y]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/tepVv7dQ59]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/zsbNWBH8a3]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/NGWKi2jI7s]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/LNxVGc2cVL]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/GJXpqvXeDj]
+[From Mashable: No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not... http://t.co/sdzbO6SWcd #socialmedia #news]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/FG5AFcv5SH]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/neIeScXFig via @mashable]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/TrPcUXA59J]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/VW2bmge3gJ]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/3vcnBs9OwN]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/tmVGIxuRx2]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/lqZuiG5Yrs]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/3qcz6dxyLf]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Ut7eydfpXN via @mashable]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/QjRQoAYArP]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/bFkKsXlnWI]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/P3lKPsaC11 | https://t.co/PCXJHNKvil http://t.co/GF6mA8Wl95]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/OwKzehpS0N]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/cRwXD7guTe #SMM #technology]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/wjYrV6Upf0 #TalkRadiance]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/9SKcjNpKFQ]
+[#SocialMedia #Seo No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not... http://t.co/mKdj14IJ1H #tech #BUSINESS]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/x0AxvMjVLu]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/aUDa6CFNSR]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/kupCorgFGx]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/HwXdmPowHE]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career: "If you're not taking risks in your career," say... http://t.co/rxjEPxFTl0]
+
+
+Question 7)Exploring the tweets for a few (the 3 randomly selected users from the list of 100 of question 5) most frequent users
+
+myData.filter((df("ScreenName")==="T_HADITIA")).select("Tweet").take(50).foreach(println)
+
+Answer:
+
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+[RT @OperationRT: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/Am3PZGCWIP]
+[RT @OperationArmy: #TeamFollowBack No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ctojzqncgV]
+..................
+
+myData.filter((df("ScreenName")==="galternativa")).select("Tweet").take(50).foreach(println)
+
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/d64EG5GtOW #socialmedia]
+[Mashable :: No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/ai8687H8H4 #socialmedia]
+
+
+myData.filter((df("ScreenName")==="tamarsw")).select("Tweet").take(50).foreach(println)
+
+
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+[No Risk, No Reward: The Power of Risk-Taking for Your Career http://t.co/SmacnXBX8G]
+
+
+Question 8)Number of Tweets that contain the string, "No Risk, No Reward".
+
+myData.filter($"Tweet".contains("No Risk, No Reward")).count
+
+Answer:
+
+res28: Long = 119897408
+
+
+**************************************************************************
+//Dataframe as relational table 
+
+
+val allTweetsRdd = sc.textFile("/SEIS736/tweets2/allTweets").map(_.split("\t"))
+
+//define the schema for DataFrame
+case class allTweets(ScreenName: String, Tweet: String, Language: String, Timestamp: String, GeoLocation: String)
+
+val tweets = allTweetsRdd.filter(_.length == 5).map(x=> allTweets(x(0),x(1),x(2),x(3),x(4)))
+
+val tweetsDF = tweets.toDF
+
+tweetsDF.write.parquet("allTweets.parquet")
+
+val df = sqlContext.read.parquet("allTweets.parquet")
+
+val myData = df.withColumn("Day",split(col("Timestamp")," ").getItem(0)).withColumn("Month",split(col("Timestamp")," ").getItem(1)).withColumn("Date",split(col("Timestamp")," ").getItem(2)).withColumn("Time",split(col("Timestamp")," ").getItem(3)).withColumn("Timezone",split(col("Timestamp")," ").getItem(4)).withColumn("Year",split(col("Timestamp")," ").getItem(5))
+
+myData.registerTempTable("allTweets_Table")
+
+sqlContext.sql("select * from allTweets_Table").show
+
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+|     ScreenName|               Tweet|Language|           Timestamp|GeoLocation|Day|Month|Date|    Time|Timezone|Year|
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+|CareerProGlobal|MyPeopleBiz Blog:...|      en|Thu Sep 26 10:13:...|       null|Thu|  Sep|  26|10:13:00|     CDT|2013|
+|     OllyGuseva|RT @trailof32: #9...|      ru|Thu Sep 26 12:12:...|       null|Thu|  Sep|  26|12:12:32|     CDT|2013|
+|      trailof32|#99cents This Car...|      en|Thu Sep 26 15:20:...|       null|Thu|  Sep|  26|15:20:17|     CDT|2013|
+|  paulregabooks|#99cents This Car...|      en|Thu Sep 26 15:20:...|       null|Thu|  Sep|  26|15:20:17|     CDT|2013|
+|  paulregabooks|#99cents This Car...|      en|Thu Sep 26 19:20:...|       null|Thu|  Sep|  26|19:20:12|     CDT|2013|
+|      trailof32|#99cents This Car...|      en|Thu Sep 26 19:20:...|       null|Thu|  Sep|  26|19:20:12|     CDT|2013|
+|     Damexified|RT @TheITTimes: U...|      en|Thu Sep 26 22:02:...|       null|Thu|  Sep|  26|22:02:51|     CDT|2013|
+|  coolnigga1234|@StephMcMahon  so...|      en|Fri Sep 27 02:18:...|       null|Fri|  Sep|  27|02:18:19|     CDT|2013|
+| AngieoftheMage|@Taegangers hi! :...|     fil|Fri Sep 27 06:37:...|       null|Fri|  Sep|  27|06:37:33|     CDT|2013|
+|      pearcey33|@GLEMOODY there i...|      en|Fri Sep 27 12:08:...|       null|Fri|  Sep|  27|12:08:19|     CDT|2013|
+|  paulageraghty|RT @YourRTEGuide:...|      en|Fri Sep 27 14:52:...|       null|Fri|  Sep|  27|14:52:43|     CDT|2013|
+|Gottalove_Reezy|Aye anybody with ...|      en|Fri Sep 27 16:19:...|       null|Fri|  Sep|  27|16:19:13|     CDT|2013|
+|       joycecom|Harness the power...|      en|Sat Sep 28 02:22:...|       null|Sat|  Sep|  28|02:22:08|     CDT|2013|
+|       CIAngels|@TheHazelFaith th...|      en|Sat Sep 28 10:18:...|       null|Sat|  Sep|  28|10:18:54|     CDT|2013|
+|      FWTruther|I'm anonymous bec...|      en|Sat Sep 28 22:38:...|       null|Sat|  Sep|  28|22:38:56|     CDT|2013|
+|     ZaidJilani|One problem with ...|      en|Sun Sep 29 11:03:...|       null|Sun|  Sep|  29|11:03:45|     CDT|2013|
+|      maggiebob|@OOK_Librarian I’...|      en|Sun Sep 29 15:52:...|       null|Sun|  Sep|  29|15:52:05|     CDT|2013|
+| barleycoveband|RT @CariCole: Wan...|      en|Sun Sep 29 20:56:...|       null|Sun|  Sep|  29|20:56:55|     CDT|2013|
+|kpowersofficial|HAPPY BIRTHDAY Gl...|      en|Mon Sep 30 03:22:...|       null|Mon|  Sep|  30|03:22:37|     CDT|2013|
+|         APSOZA|How power poses c...|      en|Mon Sep 30 06:02:...|       null|Mon|  Sep|  30|06:02:44|     CDT|2013|
++---------------+--------------------+--------+--------------------+-----------+---+-----+----+--------+--------+----+
+
+
+Question 1)Number of tweets for each year 
+
+sqlContext.sql("select Year,count(*) as NumOfTweets from allTweets_Table group by Year order by NumOfTweets desc").show
+
+Answer: 
++----+-----------+
+|Year|NumOfTweets|
++----+-----------+
+|2014|  119912709|
+|2015|       5023|
+|2013|       4403|
++----+-----------+
+
+
+
+Question 2) Number of tweets month wise throughout the years 
+
+sqlContext.sql("select Month,count(*) as NumOfTweets from allTweets_Table group by Month order by NumOfTweets desc").show
+
+Answer:
++-----+-----------+
+|Month|NumOfTweets|
++-----+-----------+
+|  Oct|  119899592|
+|  Jun|       2808|
+|  Feb|       2651|
+|  Jan|       2211|
+|  Sep|       2167|
+|  Aug|       2127|
+|  May|       1966|
+|  Jul|       1965|
+|  Apr|       1955|
+|  Dec|       1784|
+|  Nov|       1487|
+|  Mar|       1422|
++-----+-----------+
+
+
+
+Question 3) Number of tweets day wise thoughout the years
+
+sqlContext.sql("select Day,count(*) as NumOfTweets from allTweets_Table group by Day order by NumOfTweets desc").show
+
+Answer:
++---+-----------+
+|Day|NumOfTweets|
++---+-----------+
+|Sat|  119899949|
+|Wed|       4306|
+|Thu|       4122|
+|Fri|       3889|
+|Mon|       3778|
+|Tue|       3662|
+|Sun|       2429|
++---+-----------+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
